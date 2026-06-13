@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The GitHub Dispatch — Social Media & News in India</title>
+<meta name="description" content="An investigation into how young India consumes news — and why the math doesn't add up. By Sharmistha Palui, MAJMC 2024-2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── TOKENS ─── */
+:root,[data-theme="light"]{
+  --bg:#f5f0e8;--surface:#faf7f2;--surface2:#ede8df;
+  --ink:#1a1510;--ink2:#3d3228;--muted:#7a6f63;--faint:#b5aca0;
+  --rule:#c8bfb0;--accent:#ff4d00;--mono-bg:#0d0d0d;--mono-green:#39ff14;
+  --shadow:0 2px 12px rgba(26,21,16,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d0d0b;--surface:#141410;--surface2:#1c1b17;
+  --ink:#e8e0d4;--ink2:#c8bfb0;--muted:#7a7268;--faint:#4a453f;
+  --rule:#2a2820;--accent:#ff4d00;--mono-bg:#000;--mono-green:#39ff14;
+  --shadow:0 2px 12px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;font-size:17px;line-height:1.65;transition:background .3s,color .3s}
+img,svg{display:block;max-width:100%}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+p{max-width:68ch;text-wrap:pretty}
+h1,h2,h3,h4{text-wrap:balance;font-family:'Playfair Display',Georgia,serif}
+::selection{background:rgba(255,77,0,.18)}
+
+/* ─── UTILITY ─── */
+.container{max-width:960px;margin-inline:auto;padding-inline:clamp(1.2rem,4vw,2.4rem)}
+.container--wide{max-width:1200px;margin-inline:auto;padding-inline:clamp(1.2rem,4vw,2.4rem)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+
+/* ─── NEWSPAPER RULE ─── */
+.rule-thick{border:none;border-top:3px solid var(--ink);margin:0}
+.rule-thin{border:none;border-top:1px solid var(--rule);margin:0}
+.rule-accent{border:none;border-top:2px solid var(--accent);margin:0}
+.double-rule{border-top:4px double var(--ink);margin:0}
+
+/* ─── NAV ─── */
+nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:2px solid var(--ink);padding:.6rem 0;transition:background .3s}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.nav-brand{display:block;min-width:0;width:0;overflow:hidden;text-decoration:none;flex-shrink:1}
+.nav-links{display:flex;gap:1.5rem;list-style:none;flex-wrap:wrap}
+.nav-links a{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--accent)}
+.nav-toggle{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.06em;border:1.5px solid var(--ink);padding:.25rem .6rem;color:var(--ink);transition:all .2s}
+.nav-toggle:hover{background:var(--ink);color:var(--bg)}
+@media(max-width:640px){.nav-links{display:none}.nav-toggle{font-size:.62rem}}
+
+/* ─── HERO ─── */
+#hero{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding-block:clamp(3rem,8vw,6rem);border-bottom:3px solid var(--ink);position:relative;overflow:hidden}
+.hero-dateline{font-family:'IBM Plex Mono',monospace;font-size:clamp(.56rem,1vw,.72rem);letter-spacing:.04em;color:var(--muted);margin-bottom:1.2rem;text-transform:uppercase;white-space:nowrap;display:block;width:100%;text-align:left}
+.hero-headline{font-family:'Playfair Display',Georgia,serif;font-size:clamp(2.6rem,8vw,7rem);font-weight:900;line-height:1.04;letter-spacing:-.02em;color:var(--ink);margin-bottom:1.2rem}
+.hero-headline .glitch{position:relative;display:inline-block}
+.hero-headline .glitch::before,.hero-headline .glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%}
+.hero-headline .glitch::before{left:2px;text-shadow:-1px 0 var(--accent);animation:glitch-1 3s infinite linear}
+.hero-headline .glitch::after{left:-2px;text-shadow:2px 0 #0000ee;animation:glitch-2 3s infinite linear}
+@keyframes glitch-1{0%,90%,100%{clip-path:inset(100% 0 0 0)}91%{clip-path:inset(20% 0 60% 0)}93%{clip-path:inset(70% 0 10% 0)}95%{clip-path:inset(40% 0 40% 0)}97%{clip-path:inset(5% 0 80% 0)}}
+@keyframes glitch-2{0%,88%,100%{clip-path:inset(100% 0 0 0)}89%{clip-path:inset(50% 0 30% 0)}92%{clip-path:inset(10% 0 70% 0)}94%{clip-path:inset(80% 0 5% 0)}96%{clip-path:inset(30% 0 50% 0)}}
+.hero-sub{font-family:'IBM Plex Mono',monospace;font-size:clamp(.75rem,1.4vw,.9rem);color:var(--muted);line-height:1.6;margin-bottom:1.6rem;max-width:72ch;white-space:normal;text-align:left}
+.hero-byline{font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:clamp(.58rem,.85vw,.7rem);letter-spacing:.04em;color:var(--muted);border-top:1px solid rgba(232,224,212,.16);padding-top:.7rem;margin-top:0;white-space:nowrap;display:inline-block;text-align:left}
+
+/* ─── TICKER ─── */
+.ticker-wrap{overflow:hidden;background:var(--ink);color:var(--bg);padding:.45rem 0;margin-top:2rem;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw}
+.ticker-inner{display:flex;white-space:nowrap;animation:ticker 55s linear infinite}
+.ticker-inner:hover{animation-play-state:paused}
+.ticker-item{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.04em;padding-right:3rem}
+.ticker-item::before{content:"▶  ";color:var(--accent)}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ticker-inner{animation:none}.hero-headline .glitch::before,.hero-headline .glitch::after{display:none}}
+
+/* ─── SECTION BASE ─── */
+section{padding-block:clamp(3rem,7vw,5.5rem)}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:.6rem}
+.section-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;line-height:1.15;margin-bottom:1.2rem;color:var(--ink)}
+.section-title em{font-style:italic;font-weight:400}
+.lead{font-size:1.08rem;font-weight:400;line-height:1.72;color:var(--ink2);max-width:64ch;margin-bottom:1.5rem}
+.pull-quote{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:clamp(1.1rem,2.5vw,1.5rem);line-height:1.5;color:var(--ink);border-left:4px solid var(--accent);padding:1.2rem 1.5rem;margin:2rem 0;background:var(--surface);width:100%;max-width:none;display:block}
+
+/* ─── SECTION 1: CONTEXT ─── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem}
+@media(max-width:640px){.two-col{grid-template-columns:1fr}}
+.data-number{font-family:'Playfair Display',Georgia,serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:900;line-height:1;color:var(--ink);letter-spacing:-.02em}
+.data-label{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:.4rem}
+.data-source{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--faint);margin-top:.2rem}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin:2rem 0;padding:1.4rem;background:var(--surface);border:1px solid var(--rule)}
+@media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ─── TIMELINE ─── */
+.timeline{display:flex;gap:0;overflow-x:auto;padding:1.5rem 0;margin:2rem 0;scrollbar-width:thin}
+.timeline::-webkit-scrollbar{height:4px}
+.timeline::-webkit-scrollbar-track{background:var(--surface2)}
+.timeline::-webkit-scrollbar-thumb{background:var(--accent)}
+.tl-item{flex:0 0 auto;width:220px;padding-right:2rem;position:relative}
+.tl-item::after{content:'';position:absolute;top:22px;right:0;width:100%;height:2px;background:var(--rule)}
+.tl-item:last-child::after{display:none}
+.tl-year{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;color:var(--accent);margin-bottom:.7rem;letter-spacing:.14em;padding:.3rem .6rem .3rem 0;display:inline-block}
+.tl-event{font-size:.82rem;color:var(--ink2);line-height:1.4}
+.tl-dot{width:10px;height:10px;background:var(--accent);border-radius:50%;margin-bottom:.6rem}
+
+/* ─── SECTION 2: CLASSIFIEDS ─── */
+#problem{background:var(--surface);border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)}
+.classifieds-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--rule);margin-top:2rem}
+.classified-box{background:var(--bg);padding:1.2rem;position:relative}
+.classified-head{font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;border-bottom:1px solid var(--rule);padding-bottom:.4rem}
+.classified-formal{font-style:italic;font-size:.85rem;color:var(--ink2);margin-bottom:.5rem;line-height:1.5}
+.classified-plain{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--ink);line-height:1.5;font-weight:500}
+
+/* ─── SECTION 3: THEORY ─── */
+.letters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:2rem}
+.letter-card{border:1px solid var(--rule);padding:1.4rem;background:var(--surface);position:relative}
+.letter-byline{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;color:var(--accent);margin-bottom:.6rem;text-transform:uppercase}
+.letter-body{font-size:.88rem;color:var(--ink2);line-height:1.65}
+.letter-card::before{content:'To the Editor:';font-family:'Source Serif 4',Georgia,serif;font-style:italic;font-size:.75rem;color:var(--faint);display:block;margin-bottom:.3rem}
+
+/* ─── SECTION 4: DATA ─── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:2rem}
+@media(max-width:700px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--surface);border:1px solid var(--rule);padding:1.4rem}
+.chart-caption{font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:.8rem;border-bottom:2px solid var(--ink);padding-bottom:.4rem}
+.chart-annotation{font-style:italic;font-size:.8rem;color:var(--muted);margin-top:.7rem;line-height:1.5}
+.chart-src{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--faint);margin-top:.4rem}
+.chart-wrap{position:relative;height:220px}
+
+/* ─── SECTION 5: PARADOXES ─── */
+#paradoxes{background:var(--ink);color:var(--bg)}
+#paradoxes .section-label{color:var(--accent)}
+#paradoxes .section-title{color:var(--bg)}
+#paradoxes .rule-accent{border-color:var(--accent)}
+.paradox-1{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:2rem 0;border:1px solid rgba(255,255,255,.1);transition:gap .6s ease}
+.paradox-1:hover{gap:1.5rem}
+.p1-col{padding:1.8rem}
+.p1-col:first-child{border-right:2px dashed var(--accent)}
+.p1-label{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.p1-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:.88rem}
+.p1-item:last-child{border-bottom:none}
+.p1-bar{height:6px;background:var(--accent);margin-top:.25rem;transition:width .8s ease}
+.trust-score{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--accent)}
+.consumption-pct{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--mono-green)}
+@media(max-width:640px){.paradox-1{grid-template-columns:1fr}.p1-col:first-child{border-right:none;border-bottom:2px dashed var(--accent)}}
+
+/* ─── TERMINAL ─── */
+.terminal{background:var(--mono-bg);border:1px solid #333;padding:1.5rem;margin:2rem 0;position:relative;font-family:'IBM Plex Mono',monospace;font-size:.78rem;line-height:1.8;color:var(--mono-green);overflow-x:auto}
+.terminal::before{content:'● ● ●';position:absolute;top:.6rem;left:.8rem;font-size:.55rem;color:#555;letter-spacing:.3rem}
+.terminal-inner{margin-top:1.2rem}
+.t-comment{color:#555}
+.t-fn{color:#ffb347}
+.t-cursor{display:inline-block;width:8px;height:1em;background:var(--mono-green);animation:blink 1s step-end infinite;vertical-align:text-bottom}
+@keyframes blink{50%{opacity:0}}
+.scanlines{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);pointer-events:none;opacity:.4}
+
+/* ─── SECTION 6: CASE STUDIES ─── */
+.case-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--rule);margin:2rem 0}
+@media(max-width:640px){.case-grid{grid-template-columns:1fr}}
+.case-paper{background:var(--bg);padding:1.5rem}
+.case-masthead{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--ink);padding-bottom:.4rem;margin-bottom:.8rem}
+.case-headline{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(1.1rem,2.5vw,1.5rem);line-height:1.2;margin-bottom:.7rem;color:var(--ink)}
+.case-headline.condensed{font-size:clamp(1.3rem,3vw,1.8rem);font-style:italic}
+.case-lede{font-size:.84rem;color:var(--ink2);line-height:1.6;margin-bottom:1rem}
+.case-sidebar{border-top:2px solid var(--rule);padding-top:.8rem;margin-top:.8rem}
+.case-sidebar-head{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem}
+.case-sidebar li{font-size:.78rem;color:var(--ink2);line-height:1.5;margin-bottom:.3rem;padding-left:.8rem;position:relative}
+.case-sidebar li::before{content:'→';position:absolute;left:0;color:var(--faint)}
+
+/* ─── SECTION 7: RECOMMENDATIONS ─── */
+.reco-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--ink);margin:2rem 0}
+@media(max-width:640px){.reco-cols{grid-template-columns:1fr}}
+.reco-col{background:var(--bg);padding:1.5rem}
+.reco-track{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:1px solid var(--rule)}
+.reco-item{margin-bottom:1.2rem}
+.reco-num{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--faint);display:block;margin-bottom:.2rem}
+.reco-headline{font-family:'Playfair Display',Georgia,serif;font-size:1rem;font-weight:700;line-height:1.3;color:var(--ink);margin-bottom:.4rem}
+.reco-context{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* ─── SECTION 8: ABOUT ─── */
+.author-card{display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:start;padding:2rem;border:1px solid var(--rule);background:var(--surface);margin:2rem 0}
+@media(max-width:500px){.author-card{grid-template-columns:1fr}}
+.author-initial{width:80px;height:80px;background:var(--ink);color:var(--bg);font-family:'Playfair Display',Georgia,serif;font-size:2.5rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.author-name{font-family:'Playfair Display',Georgia,serif;font-size:1.3rem;font-weight:700;margin-bottom:.2rem}
+.author-role{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem}
+.author-bio{font-size:.88rem;color:var(--ink2);line-height:1.65;margin-bottom:1rem}
+.download-links{display:flex;gap:.8rem;flex-wrap:wrap}
+.dl-btn{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.06em;padding:.45rem .9rem;border:1.5px solid var(--ink);color:var(--ink);text-decoration:none;transition:all .2s;text-transform:uppercase}
+.dl-btn:hover{background:var(--ink);color:var(--bg);text-decoration:none}
+.dl-btn.accent{border-color:var(--accent);color:var(--accent)}
+.dl-btn.accent:hover{background:var(--accent);color:#fff}
+
+/* ─── FOOTER ─── */
+footer{background:var(--ink);color:var(--bg);padding:.9rem 0 .7rem;margin-top:0}
+.footer-masthead{font-family:'Playfair Display',Georgia,serif;font-size:1.3rem;font-weight:900;letter-spacing:.06em;text-align:center;margin-bottom:.3rem}
+.footer-sub{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-align:center;color:rgba(232,224,212,.5);margin-bottom:.9rem}
+.footer-rule{border-color:rgba(255,255,255,.15);margin:1.5rem 0}
+.footer-sources{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(232,224,212,.45);line-height:1.7}
+.footer-sources strong{color:rgba(232,224,212,.7)}
+.footer-copy{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(232,224,212,.3);text-align:center;margin-top:.35rem}
+
+/* ─── SCROLL REVEAL ─── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+@media(max-width:700px){.hero-dateline,.hero-sub,.hero-byline{white-space:normal;overflow:visible;text-overflow:clip}.hero-byline{line-height:1.8}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="#hero" class="nav-brand" aria-label="Back to top"></a>
+    <ul class="nav-links" role="list">
+      <li><a href="#context">Context</a></li>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#theory">Theory</a></li>
+      <li><a href="#data">Data</a></li>
+      <li><a href="#paradoxes">Paradoxes</a></li>
+      <li><a href="#cases">Cases</a></li>
+      <li><a href="#reco">Reco</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+    <button class="nav-toggle" data-theme-toggle aria-label="Switch to screen mode">PRINT</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <p class="hero-dateline">MAJMC Research Dispatch &nbsp;&nbsp; Vol. I, No. 1 &nbsp;&nbsp; June 2026 &nbsp;&nbsp; Chandigarh University</p>
+    <hr class="rule-thick" style="margin-bottom:1.2rem">
+    <h1 class="hero-headline">
+      You Trust The Paper.<br>
+      You Read The <span class="glitch" data-text="Feed.">Feed.</span>
+    </h1>
+    <p class="hero-sub">An investigation into how young India consumes news — and why the math doesn't add up.</p>
+    <p class="hero-byline">By Sharmistha Palui &nbsp;&nbsp; MAJMC, Chandigarh University &nbsp;&nbsp; Enrollment No. O24MJM110021 &nbsp;&nbsp; Guided by Shivani Sharma &nbsp;&nbsp; Academic Year 2024–2026</p>
+  </div>
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-inner">
+      <span class="ticker-item">54% of Indian online news consumers access news through YouTube — Reuters Institute 2024</span>
+      <span class="ticker-item">500 million WhatsApp users in India. Zero editorial oversight.</span>
+      <span class="ticker-item">Only 38% of Indians trust most news most of the time — Reuters Institute 2024</span>
+      <span class="ticker-item">65% of Gen Z encounter news while doing something else on social media — Google-Kantar 2025</span>
+      <span class="ticker-item">India's internet user population: 1.02 billion — DataReportal 2025</span>
+      <span class="ticker-item">501 million active social media users. Average daily usage: 3 hours 22 minutes — DataReportal 2025</span>
+      <span class="ticker-item">YouTube's recommendation algorithm governs 70% of what users watch on the platform</span>
+      <span class="ticker-item">WhatsApp forward limit: 2019. Users adapted via screenshot sharing.</span>
+      <span class="ticker-item">Instagram India: 481 million users. Breaking news has become an aesthetic exercise.</span>
+      <span class="ticker-item">54% of Indian online news consumers access news through YouTube — Reuters Institute 2024</span>
+      <span class="ticker-item">500 million WhatsApp users in India. Zero editorial oversight.</span>
+      <span class="ticker-item">Only 38% of Indians trust most news most of the time — Reuters Institute 2024</span>
+      <span class="ticker-item">65% of Gen Z encounter news while doing something else on social media — Google-Kantar 2025</span>
+      <span class="ticker-item">India's internet user population: 1.02 billion — DataReportal 2025</span>
+      <span class="ticker-item">501 million active social media users. Average daily usage: 3 hours 22 minutes — DataReportal 2025</span>
+      <span class="ticker-item">YouTube's recommendation algorithm governs 70% of what users watch on the platform</span>
+      <span class="ticker-item">WhatsApp forward limit: 2019. Users adapted via screenshot sharing.</span>
+      <span class="ticker-item">Instagram India: 481 million users. Breaking news has become an aesthetic exercise.</span>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 1: CONTEXT -->
+<section id="context">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">01 — The Context</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">India compressed a 30-year media transition into <em>ten years.</em></h2>
+      <hr class="rule-thin" style="margin-bottom:1.5rem">
+    </div>
+    <div class="two-col reveal">
+      <div>
+        <p class="lead">The algorithm didn't wait for anyone. In 2016, Jio collapsed mobile data prices and handed a billion people a smartphone-shaped front page. By 2025, the newspaper wasn't dead — it was just something young Indians trusted but didn't read.</p>
+        <p style="font-size:.9rem;color:var(--ink2);line-height:1.7;margin-bottom:1.2rem">WhatsApp became the country's information nervous system — encrypted, unmoderated, and running 24/7 through every family group chat you've ever been added to without asking. YouTube became the television that knew what you wanted before you did. Instagram turned geopolitics into infographic carousels.</p>
+      </div>
+      <div>
+        <div class="stat-grid">
+          <div><div class="data-number">1.02B</div><div class="data-label">Internet Users</div><div class="data-source">DataReportal 2025</div></div>
+          <div><div class="data-number">501M</div><div class="data-label">Social Media Users</div><div class="data-source">DataReportal 2025</div></div>
+          <div><div class="data-number">3h22</div><div class="data-label">Daily Social Media Use</div><div class="data-source">DataReportal 2025</div></div>
+          <div><div class="data-number">500M</div><div class="data-label">WhatsApp Users India</div><div class="data-source">DataReportal 2025</div></div>
+          <div><div class="data-number">97.6%</div><div class="data-label">YouTube Penetration</div><div class="data-source">DataReportal 2025</div></div>
+          <div><div class="data-number">481M</div><div class="data-label">Instagram India Users</div><div class="data-source">DataReportal 2025</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="pull-quote">Platforms through which most young Indians consume news are not journalism platforms. They are advertising platforms that carry news as a category of engagement-optimised content.</div>
+    </div>
+    <div class="reveal" style="margin-top:2.5rem">
+      <p class="section-label" style="margin-bottom:.8rem">India's Digital Inflection Points — scroll to explore →</p>
+      <div class="timeline" role="list" aria-label="Timeline of India's digital media transformation">
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2016</div><div class="tl-event">Jio launches. Mobile data prices collapse. 300M new internet users in 18 months.</div></div>
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2017</div><div class="tl-event">WhatsApp hits 200M users in India. Peer-forwarding becomes the dominant news distribution model.</div></div>
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2019</div><div class="tl-event">WhatsApp introduces forward limit of 5. Viral misinformation velocity drops — but doesn't stop.</div></div>
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2021</div><div class="tl-event">IT Rules 2021. India attempts to regulate social media. WhatsApp's encryption model immediately contested.</div></div>
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2023</div><div class="tl-event">WhatsApp launches Broadcast Channels. Legacy newsrooms get a new distribution tool.</div></div>
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2024</div><div class="tl-event">NEET-UG paper leak controversy. Social media sets the national news agenda — not the other way around.</div></div>
+        <div class="tl-item" role="listitem"><div class="tl-dot"></div><div class="tl-year">2025</div><div class="tl-event">1.02B Indian internet users. YouTube penetration: 97.6%. The transition is complete.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: PROBLEM -->
+<section id="problem">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">02 — The Problem</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">They know the newspaper is more reliable.<br><em>They still opened Instagram.</em></h2>
+      <hr class="rule-thin" style="margin-bottom:1rem">
+      <p class="lead">Six research questions. Six hypotheses. One uncomfortable pattern running through all of them.</p>
+    </div>
+    <div class="classifieds-grid reveal" role="list" aria-label="Research hypotheses">
+      <div class="classified-box" role="listitem">
+        <div class="classified-head">H1 — Dependency Notice</div>
+        <p class="classified-formal">Higher social media usage is positively associated with greater news dependency.</p>
+        <p class="classified-plain">Translation: The more you scroll, the more you need to scroll.</p>
+      </div>
+      <div class="classified-box" role="listitem">
+        <div class="classified-head">H2 — Algorithm Disclosure</div>
+        <p class="classified-formal">Algorithmic recommendations significantly influence news exposure among young Indian users.</p>
+        <p class="classified-plain">Translation: You didn't choose what you read. The feed did.</p>
+      </div>
+      <div class="classified-box" role="listitem">
+        <div class="classified-head">H3 — Engagement Notice</div>
+        <p class="classified-formal">Individual engagement behaviour significantly influences perceived news visibility.</p>
+        <p class="classified-plain">Translation: Your likes and shares are editorial decisions you didn't know you were making.</p>
+      </div>
+      <div class="classified-box" role="listitem">
+        <div class="classified-head">H4 — Trust Advisory</div>
+        <p class="classified-formal">Higher misinformation exposure is negatively associated with trust in social media news.</p>
+        <p class="classified-plain">Translation: The more fake news you see, the less you trust the platform — but you stay anyway.</p>
+      </div>
+      <div class="classified-box" role="listitem">
+        <div class="classified-head">H5 — Literacy Notice</div>
+        <p class="classified-formal">Higher media literacy is positively associated with more frequent news verification behaviour.</p>
+        <p class="classified-plain">Translation: Knowing more helps you check more. But not enough.</p>
+      </div>
+      <div class="classified-box" role="listitem">
+        <div class="classified-head">H6 — Age Differential</div>
+        <p class="classified-formal">Young Indians aged 18–24 show significantly stronger preference for social media as primary news source vs. those aged 25–35.</p>
+        <p class="classified-plain">Translation: The youngest cohort is the most dependent. That trend only moves in one direction.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: THEORY -->
+<section id="theory">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">03 — Letters to the Editor</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">Six theories walk into a news feed.</h2>
+      <hr class="rule-thin" style="margin-bottom:1rem">
+      <p class="lead">The academic frameworks that try to explain what's happening — in plain English, for once.</p>
+    </div>
+    <div class="letters-grid reveal">
+      <div class="letter-card">
+        <div class="letter-byline">Katz, Blumler & Gurevitch, 1974 — Uses & Gratifications</div>
+        <p class="letter-body">You don't just passively receive media. You choose it to satisfy specific needs — information, entertainment, social connection. But when the algorithm chooses for you, the active audience idea starts to look a lot more complicated.</p>
+      </div>
+      <div class="letter-card">
+        <div class="letter-byline">McCombs & Shaw, 1972 — Agenda Setting</div>
+        <p class="letter-body">Media doesn't tell you what to think. It tells you what to think about. In the social media era, your feed is the editor — and the editor is an engagement-maximising machine. What gets amplified gets noticed. What gets noticed becomes the news.</p>
+      </div>
+      <div class="letter-card">
+        <div class="letter-byline">Ball-Rokeach & DeFleur, 1976 — Media Dependency</div>
+        <p class="letter-body">The more you rely on a medium to meet your informational needs, the more power it has over you. Young Indians don't use social media for news because they trust it. They use it because it's structurally impossible to avoid. That's dependency, not preference.</p>
+      </div>
+      <div class="letter-card">
+        <div class="letter-byline">White, 1950 & Shoemaker & Vos, 2009 — Gatekeeping</div>
+        <p class="letter-body">Traditionally, editors decided what news reached you. Now algorithms do. The difference: editors had professional accountability. Algorithms have engagement targets. One optimises for public interest. The other optimises for watch time.</p>
+      </div>
+      <div class="letter-card">
+        <div class="letter-byline">Castells, 2010 — Network Society</div>
+        <p class="letter-body">Power in the digital age flows through networks, not hierarchies. News authority is no longer owned by The Hindu or NDTV — it's distributed across WhatsApp groups and YouTube channels. Some of those nodes are journalists. Most are not.</p>
+      </div>
+      <div class="letter-card">
+        <div class="letter-byline">Jenkins, 2006 — Participatory Culture</div>
+        <p class="letter-body">When you share a news video, you're making an editorial decision. Every forward, every like, every comment is a tiny vote on what counts as news. The algorithm just tallies the ballot — without distinguishing accurate content from misinformation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: DATA -->
+<section id="data" style="background:var(--surface);border-top:3px solid var(--ink)">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">04 — The Data</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">The numbers that make the case.</h2>
+      <hr class="rule-thin" style="margin-bottom:.5rem">
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:1.5rem">All data sourced from real published reports. No synthetic figures.</p>
+    </div>
+    <div class="charts-grid reveal">
+      <div class="chart-card">
+        <div class="chart-caption">Trust vs. Consumption — The Inversion</div>
+        <div class="chart-wrap"><canvas id="chart-trust" aria-label="Bar chart comparing trust scores versus primary news source usage across media types" role="img"></canvas></div>
+        <p class="chart-annotation"><em>The most trusted sources are the least consumed. The most consumed are the least trusted. This is the trust-consumption paradox.</em></p>
+        <p class="chart-src">Source: Reuters Institute Digital News Report India 2024</p>
+      </div>
+      <div class="chart-card">
+        <div class="chart-caption">Where Indians Get Their News</div>
+        <div class="chart-wrap"><canvas id="chart-platforms" aria-label="Horizontal bar chart showing percentage of Indian news consumers using each social platform" role="img"></canvas></div>
+        <p class="chart-annotation"><em>YouTube leads. WhatsApp follows. Facebook fades. Instagram's numbers are smaller but its grip on the 18–24 demographic is disproportionate.</em></p>
+        <p class="chart-src">Source: Reuters Institute Digital News Report India 2024</p>
+      </div>
+      <div class="chart-card">
+        <div class="chart-caption">India's Trust in News — The Decline</div>
+        <div class="chart-wrap"><canvas id="chart-trust-trend" aria-label="Line chart showing declining trust in news in India from 2020 to 2024" role="img"></canvas></div>
+        <p class="chart-annotation"><em>Trust in news in India has been falling. In 2024, only 38% of Indian adults said they trust most news most of the time — down 4 percentage points from the previous year.</em></p>
+        <p class="chart-src">Source: Reuters Institute Digital News Reports 2020–2024</p>
+      </div>
+      <div class="chart-card">
+        <div class="chart-caption">How Gen Z Finds News</div>
+        <div class="chart-wrap"><canvas id="chart-genz" aria-label="Doughnut chart showing deliberate versus incidental news discovery among Gen Z in India" role="img"></canvas></div>
+        <p class="chart-annotation"><em>65% of Gen Z audiences encounter news while doing something else entirely on social media. They're not seeking news. The news finds them.</em></p>
+        <p class="chart-src">Source: Google-Kantar Gen Z India News Report 2025</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: PARADOXES -->
+<section id="paradoxes">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">05 — Original Contributions</p>
+      <hr class="rule-accent" style="margin-bottom:1rem">
+      <h2 class="section-title" style="color:var(--bg)">Two paradoxes in the literature<br><em style="color:rgba(232,224,212,.7)">had not yet been named.</em></h2>
+      <hr class="rule-accent" style="margin-bottom:1.5rem">
+    </div>
+    <div class="reveal">
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.6rem">Paradox 01 — Hover to feel the rupture</p>
+      <div class="paradox-1" role="region" aria-label="Trust versus consumption paradox visualization">
+        <div class="p1-col">
+          <div class="p1-label">What they trust</div>
+          <div class="p1-item"><span>Print Newspapers</span><span class="trust-score">3.78 / 5</span></div>
+          <div style="background:var(--accent);height:5px;width:75.6%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>Television News</span><span class="trust-score">3.45 / 5</span></div>
+          <div style="background:var(--accent);height:5px;width:69%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>Online News Sites</span><span class="trust-score">3.21 / 5</span></div>
+          <div style="background:var(--accent);height:5px;width:64%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>Social Media</span><span class="trust-score">2.89 / 5</span></div>
+          <div style="background:var(--accent);height:5px;width:57.8%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>WhatsApp Forwards</span><span class="trust-score">2.24 / 5</span></div>
+          <div style="background:var(--accent);height:5px;width:44.8%;margin-bottom:.8rem;transition:width .8s"></div>
+        </div>
+        <div class="p1-col">
+          <div class="p1-label">What they actually read</div>
+          <div class="p1-item"><span>Print Newspapers</span><span class="consumption-pct">4.7%</span></div>
+          <div style="background:var(--mono-green);height:5px;width:4.7%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>Television News</span><span class="consumption-pct">26%</span></div>
+          <div style="background:var(--mono-green);height:5px;width:26%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>Online News Sites</span><span class="consumption-pct">22.7%</span></div>
+          <div style="background:var(--mono-green);height:5px;width:22.7%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>Social Media</span><span class="consumption-pct">38.7%</span></div>
+          <div style="background:var(--mono-green);height:5px;width:38.7%;margin-bottom:.8rem;transition:width .8s"></div>
+          <div class="p1-item"><span>WhatsApp Forwards</span><span class="consumption-pct">7.9%</span></div>
+          <div style="background:var(--mono-green);height:5px;width:7.9%;margin-bottom:.8rem;transition:width .8s"></div>
+        </div>
+      </div>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(232,224,212,.4);margin-top:.5rem">Source: Reuters Institute Digital News Report India 2024 — trust hierarchy: dissertation analysis; consumption distribution</p>
+    </div>
+    <div class="reveal" style="margin-top:3rem">
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.6rem">Paradox 02 — The Terminal</p>
+      <div class="terminal" role="region" aria-label="Algorithmically aware but algorithmically compliant paradox explained as code">
+        <div class="scanlines"></div>
+        <div class="terminal-inner">
+          <span class="t-comment"># THE ALGORITHMICALLY AWARE BUT ALGORITHMICALLY COMPLIANT PARADOX</span><br><br>
+          <span>You know the algorithm curates your feed.</span><br>
+          <span>You use the feed anyway.</span><br>
+          <span>This is not stupidity. This is structure.</span><br><br>
+          <span class="t-fn">function01: sophistication</span><br>
+          <span class="t-comment"># You know the algorithm. So you game it.</span><br>
+          <span class="t-comment"># You like posts from sources you trust.</span><br>
+          <span class="t-comment"># Compliant — but deliberately so.</span><br><br>
+          <span class="t-fn">function02: resignation</span><br>
+          <span class="t-comment"># You know the algorithm. You see no exit.</span><br>
+          <span class="t-comment"># So you stay. The feed continues.</span><br>
+          <span class="t-comment"># Learned helplessness, digitally administered.</span><br><br>
+          <span class="t-fn">function03: calibration</span><br>
+          <span class="t-comment"># You know the algorithm. You read differently.</span><br>
+          <span class="t-comment"># More skeptically. More carefully.</span><br>
+          <span class="t-comment"># Awareness as quality filter, not quantity reducer.</span><br><br>
+          <span>Which mechanism is running on your device right now?</span><span class="t-cursor"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: CASE STUDIES -->
+<section id="cases">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">06 — Case Studies</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">Two stories. Two kinds of information failure.</h2>
+      <hr class="rule-thin" style="margin-bottom:1.5rem">
+    </div>
+    <div class="case-grid reveal">
+      <div class="case-paper">
+        <div class="case-masthead">THE INDIA DISPATCH &nbsp;&nbsp; APRIL 22, 2025 &nbsp;&nbsp; BREAKING</div>
+        <h3 class="case-headline condensed">Pahalgam Attack — When the Algorithm Amplified the Lie</h3>
+        <p class="case-lede">Within hours of the April 2025 terror attack that killed 26 civilians in Pahalgam, social media was saturated with fabricated videos, false casualty figures, and communal narratives. The platforms moved faster than the facts.</p>
+        <div class="case-sidebar">
+          <div class="case-sidebar-head">What the platforms did</div>
+          <ul class="case-sidebar" style="padding:0;list-style:none">
+            <li>WhatsApp: unrelated violent videos circulated with fabricated captions across closed groups</li>
+            <li>X/Twitter: false attacker identity trending within hours, tens of thousands of retweets before fact-checks arrived</li>
+            <li>YouTube: algorithm recommended high-engagement channels with documented misinformation histories</li>
+            <li>AltNews and FactChecker.in debunked within 24 hours — but reached a fraction of the original audience</li>
+          </ul>
+        </div>
+      </div>
+      <div class="case-paper">
+        <div class="case-masthead">THE INDIA DISPATCH &nbsp;&nbsp; JUNE 2024 &nbsp;&nbsp; INVESTIGATION</div>
+        <h3 class="case-headline">NEET-UG 2024 — When Social Media Set the National Agenda</h3>
+        <p class="case-lede">The NEET-UG paper leak controversy didn't begin in a newsroom. It began in student WhatsApp groups and Instagram accounts that turned 2.4 million examination candidates' outrage into a national political crisis — and forced legacy media to follow.</p>
+        <div class="case-sidebar">
+          <div class="case-sidebar-head">What made this different</div>
+          <ul class="case-sidebar" style="padding:0;list-style:none">
+            <li>Not a misinformation crisis — an epistemic uncertainty crisis where contested facts were amplified by all sides</li>
+            <li>Social media set the agenda for legacy media, reversing the traditional direction of influence</li>
+            <li>Emotional intensity (2.4M candidates' futures at stake) drove engagement and amplified both accurate reporting and misinformation equally</li>
+            <li>Consistent with the Network Agenda Setting model — social platforms now co-create the national news agenda</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:1.5rem">
+      <div class="pull-quote">Together, Pahalgam and NEET-UG show that the social media news quality problem isn't just about fake content. It's about what gets amplified, what gets ignored, and who decides — when the answer to that last question is an algorithm optimising for engagement.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: RECOMMENDATIONS -->
+<section id="reco" style="background:var(--surface2);border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">07 — Recommendations</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">What needs to change, and who needs to change it.</h2>
+      <hr class="rule-thin" style="margin-bottom:1.5rem">
+    </div>
+    <div class="reco-cols reveal">
+      <div class="reco-col">
+        <div class="reco-track">For News Organisations</div>
+        <div class="reco-item"><span class="reco-num">01.</span><div class="reco-headline">Go WhatsApp-first.</div><p class="reco-context">78% of young Indians use WhatsApp for news. Verified content delivered directly via Broadcast Channels leverages the peer-trust mechanism without relying on forwarding chains.</p></div>
+        <div class="reco-item"><span class="reco-num">02.</span><div class="reco-headline">Design for the algorithm without surrendering to it.</div><p class="reco-context">High-quality journalism can be algorithmically discoverable. Engagement-optimised headlines and visual formats don't require compromising the content beneath them.</p></div>
+        <div class="reco-item"><span class="reco-num">03.</span><div class="reco-headline">Co-produce media literacy content.</div><p class="reco-context">Legacy organisations have a reputational stake in a more media-literate audience. Distribute verification guides and source-evaluation tools through the same channels as news.</p></div>
+      </div>
+      <div class="reco-col">
+        <div class="reco-track">For Platform Companies</div>
+        <div class="reco-item"><span class="reco-num">01.</span><div class="reco-headline">Mandatory algorithmic transparency for news ranking.</div><p class="reco-context">Disclose the signals used to rank news content. Audit for systematic bias toward high-engagement low-credibility sources. Publish the results.</p></div>
+        <div class="reco-item"><span class="reco-num">02.</span><div class="reco-headline">WhatsApp needs architectural friction, not content moderation.</div><p class="reco-context">End-to-end encryption makes content moderation impossible. The forward limit worked. A pre-forward delay for flagged content is the logical next intervention.</p></div>
+        <div class="reco-item"><span class="reco-num">03.</span><div class="reco-headline">Embed verification nudges at the moment of sharing.</div><p class="reco-context">Instagram and YouTube should prompt source verification for breaking-news content before it is shared — not after the misinformation has already spread.</p></div>
+      </div>
+      <div class="reco-col">
+        <div class="reco-track">For Policymakers</div>
+        <div class="reco-item"><span class="reco-num">01.</span><div class="reco-headline">Mandate algorithmic transparency reporting.</div><p class="reco-context">Platforms with over 50M Indian users should be required to disclose ranking signals for news content. Not the code — the logic.</p></div>
+        <div class="reco-item"><span class="reco-num">02.</span><div class="reco-headline">Invest in public digital journalism infrastructure.</div><p class="reco-context">The trust-consumption paradox is an accessibility problem. Credible journalism needs to be accessible where young Indians already are — not where policymakers wish they were.</p></div>
+        <div class="reco-item"><span class="reco-num">03.</span><div class="reco-headline">Put media literacy in the curriculum.</div><p class="reco-context">Awareness-only interventions don't work (Guess et al., 2020). Skill-building — reverse image search, source evaluation, fact-checking — must be practised, not just taught.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 8: ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">08 — The Researcher</p>
+      <hr class="rule-thick" style="margin-bottom:1rem">
+      <h2 class="section-title">About this investigation.</h2>
+      <hr class="rule-thin" style="margin-bottom:1.5rem">
+    </div>
+    <div class="author-card reveal">
+      <div class="author-initial" aria-hidden="true">SP</div>
+      <div>
+        <div class="author-name">Sharmistha Palui</div>
+        <div class="author-role">Investigation Notes — MAJMC 2024–2026</div>
+        <p class="author-bio">This investigation began with a simple contradiction — young audiences know legacy journalism is more credible, yet they still return to feeds, forwards, reels, and recommendation loops for news. The project studies that contradiction not as a moral failure, but as a structural one shaped by platform design, algorithmic visibility, peer trust, habit, and access.</p>
+        <div style="border-top:1px solid var(--rule);margin:1rem 0 1.1rem;padding-top:.9rem">
+          <p style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;line-height:1.8;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin:0">
+            <span style="color:var(--faint)">Name</span> Sharmistha Palui<br>
+            <span style="color:var(--faint)">Enrollment</span> O24MJM110021<br>
+            <span style="color:var(--faint)">Programme</span> MAJMC 2024–2026<br>
+            <span style="color:var(--faint)">Institution</span> Chandigarh University<br>
+            <span style="color:var(--faint)">Guide</span> Shivani Sharma<br>
+            <span style="color:var(--faint)">Methodology</span> Secondary data analysis, Literature synthesis, Theoretical framework application
+          </p>
+        </div>
+        <div class="download-links">
+          <a href="#" class="dl-btn accent">↓ Download PDF</a>
+          <a href="#" class="dl-btn">↓ Cite This Work</a>
+          <a href="#" class="dl-btn">← Back to Top</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-masthead">THE GITHUB DISPATCH</div>
+    <div class="footer-sub">Vol. I, No. 1 &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; MAJMC Research, Chandigarh University</div>
+    <hr class="footer-rule rule-thin">
+    <div class="footer-sources">
+      <strong>Primary Sources:</strong> Reuters Institute Digital News Report India 2024; DataReportal Digital 2025 — India; Google-Kantar Gen Z India News Report 2025; TRAI Telecom Subscription Data 2024; WhatsApp Transparency Report 2023.<br>
+      <strong>Theoretical Frameworks:</strong> Katz et al. (1974); McCombs & Shaw (1972); Ball-Rokeach & DeFleur (1976); White (1950); Shoemaker & Vos (2009); Castells (2010); Jenkins (2006).<br>
+      <strong>Case Study Sources:</strong> AltNews.in; FactChecker.in; The Wire; NDTV; Indian Express — April–June 2025 coverage archives.
+    </div>
+    <div class="footer-copy">© 2026 Sharmistha Palui · MAJMC, Chandigarh University · For academic submission only</div>
+  </div>
+</footer>
+
+<script>
+// ─── THEME TOGGLE ───
+(function(){
+  const t = document.querySelector('[data-theme-toggle]');
+  const r = document.documentElement;
+  let d = r.getAttribute('data-theme') || 'light';
+  t && t.addEventListener('click', () => {
+    d = d === 'dark' ? 'light' : 'dark';
+    r.setAttribute('data-theme', d);
+    t.textContent = d === 'dark' ? 'SCREEN' : 'PRINT';
+  });
+})();
+
+// ─── SCROLL REVEAL ───
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+})();
+
+// ─── CHARTS ───
+const chartDefaults = {
+  font: { family: "'IBM Plex Mono', monospace", size: 11 },
+  color: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#7a6f63'
+};
+Chart.defaults.font.family = chartDefaults.font.family;
+Chart.defaults.font.size = chartDefaults.font.size;
+Chart.defaults.color = chartDefaults.color;
+
+const accent = '#ff4d00';
+const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1510';
+const rule = getComputedStyle(document.documentElement).getPropertyValue('--rule').trim() || '#c8bfb0';
+
+// Chart 1: Trust vs Consumption
+new Chart(document.getElementById('chart-trust'), {
+  type: 'bar',
+  data: {
+    labels: ['Print', 'TV News', 'Online', 'Social', 'WhatsApp'],
+    datasets: [
+      { label: 'Trust Score (/5)', data: [3.78, 3.45, 3.21, 2.89, 2.24], backgroundColor: accent + 'cc', borderColor: accent, borderWidth: 1 },
+      { label: 'Consumption (%)', data: [4.7, 26, 22.7, 38.7, 7.9], backgroundColor: '#39ff1466', borderColor: '#39ff14', borderWidth: 1 }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { y: { grid: { color: rule + '44' }, ticks: { color: ink } }, x: { grid: { display: false }, ticks: { color: ink } } } }
+});
+
+// Chart 2: Platform usage
+new Chart(document.getElementById('chart-platforms'), {
+  type: 'bar',
+  data: {
+    labels: ['YouTube', 'WhatsApp', 'Facebook', 'Instagram', 'Twitter/X', 'Telegram'],
+    datasets: [{ label: '% using for news', data: [54, 39, 26, 18, 12, 8], backgroundColor: accent + 'bb', borderColor: accent, borderWidth: 1 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: rule + '44' }, ticks: { color: ink } }, y: { grid: { display: false }, ticks: { color: ink } } } }
+});
+
+// Chart 3: Trust trend
+new Chart(document.getElementById('chart-trust-trend'), {
+  type: 'line',
+  data: {
+    labels: ['2020', '2021', '2022', '2023', '2024'],
+    datasets: [{ label: 'Trust in news (%)', data: [41, 38, 37, 42, 38], borderColor: accent, backgroundColor: accent + '22', tension: 0.4, fill: true, pointBackgroundColor: accent, pointRadius: 5 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 30, max: 55, grid: { color: rule + '44' }, ticks: { color: ink } }, x: { grid: { display: false }, ticks: { color: ink } } } }
+});
+
+// Chart 4: Gen Z news discovery
+new Chart(document.getElementById('chart-genz'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Incidental (while doing something else)', 'Deliberate news seeking'],
+    datasets: [{ data: [65, 35], backgroundColor: [accent, '#39ff1466'], borderColor: ['#f5f0e8', '#f5f0e8'], borderWidth: 3 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } } }, cutout: '65%' }
+});
+</script>
+
+</body>
+</html>
